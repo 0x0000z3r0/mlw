@@ -1,0 +1,64 @@
+#include <sys/mman.h>
+#include <string.h>
+#include <stdio.h>
+#include <errno.h>
+/*
+   0:   55                      push   %rbp
+   1:   48 89 e5                mov    %rsp,%rbp
+   4:   48 81 ec 04 00 00 00    sub    $0x4,%rsp
+   b:   c6 44 24 fc 61          movb   $0x61,-0x4(%rsp)
+  10:   c6 44 24 fd 62          movb   $0x62,-0x3(%rsp)
+  15:   c6 44 24 fe 63          movb   $0x63,-0x2(%rsp)
+  1a:   c6 44 24 ff 0a          movb   $0xa,-0x1(%rsp)
+  1f:   48 b8 01 00 00 00 00    movabs $0x1,%rax
+  26:   00 00 00 
+  29:   48 bf 01 00 00 00 00    movabs $0x1,%rdi
+  30:   00 00 00 
+  33:   48 8d 74 24 fc          lea    -0x4(%rsp),%rsi
+  38:   48 ba 04 00 00 00 00    movabs $0x4,%rdx
+  3f:   00 00 00 
+  42:   0f 05                   syscall
+  44:   c9                      leave
+  45:   c3                      ret
+*/
+static unsigned char code[] = {
+	0x55,
+	0x48, 0x89, 0xe5,
+	0x48, 0x81, 0xec, 0x04, 0x00, 0x00, 0x00,
+	0xc6, 0x44, 0x24, 0xfc, 0x61,
+	0xc6, 0x44, 0x24, 0xfd, 0x62,
+	0xc6, 0x44, 0x24, 0xfe, 0x63,
+	0xc6, 0x44, 0x24, 0xff, 0x0a,
+	0x48, 0xb8, 0x01, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00,
+	0x48, 0xbf, 0x01, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00,
+	0x48, 0x8d, 0x74, 0x24, 0xfc,
+	0x48, 0xba, 0x04, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00,
+	0x0f, 0x05,
+	0xc9, 
+	0xc3, 
+};
+
+int
+main(void)
+{
+	void *mem;
+	mem = mmap(NULL, 4096, 
+		PROT_READ | PROT_WRITE | PROT_EXEC, 
+		MAP_ANONYMOUS | MAP_PRIVATE, 
+		-1, (off_t)0);
+	if (mem == MAP_FAILED) {
+		printf("Map failed, err: %s\n", strerror(errno));
+		return 1;
+	}
+
+	memcpy(mem, code, sizeof (code));
+
+	void (*func)(void) = mem;
+	func();
+
+	munmap(mem, 4096);
+	return 0;
+}
