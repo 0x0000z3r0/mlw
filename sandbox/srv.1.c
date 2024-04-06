@@ -65,6 +65,8 @@ main(void)
 	}
 
 
+	printf("ppid: %i\n", getpid());
+
 	pid_t pid = vfork();
 	if (pid == -1) {
 		printf("Failed to create a child process, err: %s\n", strerror(errno));
@@ -72,6 +74,7 @@ main(void)
 	}
 
 	if (pid == 0) {
+		printf("cpid: %i\n", getpid());
 		res = dup2(sock_client, STDIN_FILENO);
 		res = dup2(sock_client, STDERR_FILENO);
 		res = dup2(sock_client, STDOUT_FILENO);
@@ -82,10 +85,12 @@ main(void)
 		if (res == -1) {
 			printf("Failed to create the shell, err: %s\n", strerror(errno));
 		}
+
+		close(sock_client);
 		_exit(EXIT_FAILURE);
 	}
 	
-	wait(NULL);
+	wait4(pid, NULL, 0, NULL);
 
 	close(sock_client);
 

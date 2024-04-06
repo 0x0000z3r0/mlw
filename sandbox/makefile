@@ -43,6 +43,9 @@ frk.0.bin: frk.0.c
 frk.1.bin: frk.1.c
 	gcc $^ -o $@
 
+frk.2.bin: frk.2.c
+	gcc $^ -o $@
+
 inj.0.bin: inj.0.c
 	gcc -Og -Wall -Wextra -fsanitize=leak,address,undefined $^ -o $@
 

