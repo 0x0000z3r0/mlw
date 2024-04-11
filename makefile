@@ -1,10 +1,13 @@
-EXE=malware
 CFLAGS=-fsanitize=leak,address,undefined -Wall -Wextra
 
-SRC=$(wildcard *.c)
+.PHONY: pkr
+pkr: mlw pkr.c
+	ld -r -b binary mlw -o bin
+	$(CC) $(CFLAGS) bin pkr.c -o pkr
 
-debug: $(SRC)
-	$(CC) $(CFLAGS) $^ -o $(EXE)
+.PHONY: mlw 
+mlw: mlw.c elf.c mm.c vm.c
+	$(CC) $(CFLAGS) $^ -o $@
 
 shl.bin: shl.o
 	ld $^ -o $@
@@ -21,4 +24,4 @@ srv.o: srv.s
 	objdump -d $@
 
 clean:
-	-@rm -rf $(EXE) *.o *.bin 2>/dev/null || true
+	-@rm -rf *.o *.bin mlw bin pkr 2>/dev/null || true

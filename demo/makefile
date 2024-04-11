@@ -1,3 +1,27 @@
+vdso.0.bin: vdso.0.c
+	gcc $^ -o $@
+
+pkr.0.bin: pkr.0.c
+	gcc $^ -o $@
+
+pkr.1.bin: pkr.1.c
+	gcc $^ -o $@
+
+pkr.2.bin: pkr.2.c
+	ld -r -b binary target -o target.o
+	gcc target.o pkr.2.c -o $@
+
+pkr.3.bin: pkr.3.c
+	ld -r -b binary target -o target.o
+	gcc -Og -Wall -Wextra -fsanitize=leak,address,undefined target.o $^ -o $@
+
+pkr.4.bin: pkr.4.c
+	ld -r -b binary target -o target.o
+	gcc -Og -Wall -Wextra -fsanitize=leak,address,undefined target.o $^ -o $@
+
+pkr.5.bin: pkr.5.c
+	gcc -Og -Wall -Wextra -fsanitize=leak,address,undefined $^ -o $@
+
 spl.0.bin: spl.0.c
 	gcc $^ -o $@
 
@@ -47,6 +71,9 @@ frk.2.bin: frk.2.c
 	gcc $^ -o $@
 
 inj.0.bin: inj.0.c
+	gcc -Og -Wall -Wextra -fsanitize=leak,address,undefined $^ -o $@
+
+ldr.0.bin: ldr.0.c
 	gcc -Og -Wall -Wextra -fsanitize=leak,address,undefined $^ -o $@
 
 clean:
