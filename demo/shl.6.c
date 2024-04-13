@@ -1,7 +1,5 @@
 #include <sys/mman.h>
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
+
 /*
    0:   55                      push   %rbp
    1:   48 89 e5                mov    %rsp,%rbp
@@ -21,7 +19,8 @@
   44:   c9                      leave
   45:   c3                      ret
 */
-static unsigned char code[] = {
+
+static const unsigned char code[] = {
 	0x55,
 	0x48, 0x89, 0xe5,
 	0x48, 0x81, 0xec, 0x04, 0x00, 0x00, 0x00,
@@ -44,21 +43,14 @@ static unsigned char code[] = {
 int
 main(void)
 {
-	void *mem;
-	mem = mmap(NULL, 4096, 
-		PROT_READ | PROT_WRITE | PROT_EXEC, 
-		MAP_ANONYMOUS | MAP_PRIVATE, 
-		-1, (off_t)0);
-	if (mem == MAP_FAILED) {
-		printf("Map failed, err: %s\n", strerror(errno));
-		return 1;
-	}
+	// mprotect want page aligned memory address
+	void *page;
+	page = (void*)((long)code & ~(4096 - 1));
 
-	memcpy(mem, code, sizeof (code));
+	mprotect(page, sizeof (code), PROT_EXEC | PROT_READ);
 
-	void (*func)(void) = mem;
+	void (*func)(void) = (void*)code;
 	func();
 
-	munmap(mem, 4096);
 	return 0;
 }

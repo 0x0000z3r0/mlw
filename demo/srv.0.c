@@ -84,16 +84,15 @@ main(void)
 	while (1) {
 		bzero(buff, sizeof (buff));
 		bytes = read(sock_client, buff, sizeof (buff));
-		if (bytes == -1) {
-			printf("Connection closed, err: %s\n", strerror(errno));
-			goto _CLOSE_SOCKET;
+		printf("< (%zi)\n", bytes);
+		if (bytes == -1 || bytes == 0) {
+			printf("Connection closed by the client, err: %s\n", strerror(errno));
+			goto _FREE_ARGS;
 		}
 
-		printf("< (%zi) %.*s", bytes, (int)bytes, buff);
+		free(args_vec);
 
-		// fix telnet newline
-		buff[bytes - 2] = '\0';
-
+		buff[bytes - 1] = '\0';
 		if (strcmp(buff, "quit") == 0) {
 			printf("Connection closed by the client\n");
 			close(sock_client);
@@ -104,22 +103,23 @@ main(void)
 		res = pipe(com);
 		if (res == -1) {
 			printf("Failed to create communication pipes, err: %s\n", strerror(errno));
-			goto _CLOSE_SOCKET;
+			goto _FREE_ARGS;
 		}
 
 		pid_t pid = vfork();
 		if (pid == -1) {
 			printf("Failed to create a child process, err: %s\n", strerror(errno));
-			goto _CLOSE_SOCKET;
+			goto _FREE_ARGS;
 		}
 
 		if (pid == 0) {
 			args_len = 0;
 			args_cap = 32;
+
 			args_vec = malloc(sizeof (char*) * args_cap);
 			if (args_vec == NULL) {
 				printf("Failed to allocate memory for arguments vector, err: %s\n", strerror(errno));
-				goto _CLOSE_SOCKET;
+				goto _FREE_ARGS;
 			}
 
 			char *tok;
@@ -133,7 +133,7 @@ main(void)
 					if (args_tmp == NULL) {
 						free(args_vec);
 						printf("Failed to reallocate memory for arguments vector, err: %s\n", strerror(errno));
-						goto _CLOSE_SOCKET;
+						goto _FREE_ARGS;
 					}
 
 					args_vec = args_tmp;
@@ -153,7 +153,7 @@ main(void)
 				if (args_tmp == NULL) {
 					free(args_vec);
 					printf("Failed to reallocate memory for arguments vector, err: %s\n", strerror(errno));
-					goto _CLOSE_SOCKET;
+					goto _FREE_ARGS;
 				}
 
 				args_vec = args_tmp;
@@ -176,17 +176,18 @@ main(void)
 			bytes = write(sock_client, buff, bytes);
 			if (bytes == -1) {
 				printf("Connection closed, err: %s\n", strerror(errno));
-				goto _CLOSE_SOCKET;
+				goto _FREE_ARGS;
 			}
 
 			bytes = write(sock_client, prompt, sizeof (prompt) - 1);
 			if (bytes == -1) {
 				printf("Connection closed, err: %s\n", strerror(errno));
-				goto _CLOSE_SOCKET;
+				goto _FREE_ARGS;
 			}
 		}
 	}
 
+_FREE_ARGS:
 	free(args_vec);
 _CLOSE_SOCKET:
 	close(sock_serv);

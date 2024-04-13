@@ -1,9 +1,22 @@
 CFLAGS=-fsanitize=leak,address,undefined -Wall -Wextra
 
+.PHONY:all
+all: mlw xor pkr.c
+#	./xor mlw 9
+#	mv mlw.x mlw
+	ld -r -b binary -z noexecstack mlw -o bin
+	$(CC) bin pkr.c -o pkr
+
 .PHONY: pkr
-pkr: mlw pkr.c
-	ld -r -b binary mlw -o bin
+pkr: mlw xor pkr.c
+	./xor mlw 9
+	mv mlw.x mlw
+	ld -r -b binary -z noexecstack mlw -o bin
 	$(CC) $(CFLAGS) bin pkr.c -o pkr
+
+.PHONY: xor
+xor: xor.c
+	$(CC) $(CFLAGS) $^ -o $@
 
 .PHONY: mlw 
 mlw: mlw.c elf.c mm.c vm.c
@@ -24,4 +37,4 @@ srv.o: srv.s
 	objdump -d $@
 
 clean:
-	-@rm -rf *.o *.bin mlw bin pkr 2>/dev/null || true
+	-@rm -rf *.o *.bin *.x mlw xor bin pkr 2>/dev/null || true

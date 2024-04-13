@@ -8,14 +8,14 @@ _start:
 	; allocate 4 bytes
 	sub	rsp, 4
 	; set "abc\n" in stack
-	mov	byte [rsp - 4], 'a'
-	mov	byte [rsp - 3], 'b'
-	mov	byte [rsp - 2], 'c'
-	mov	byte [rsp - 1], 0x0A ; new line in hex
+	mov	byte [rbp - 4], 'a'
+	mov	byte [rbp - 3], 'b'
+	mov	byte [rbp - 2], 'c'
+	mov	byte [rbp - 1], 0x0A ; new line in hex
 	; call WRITE
 	mov	rax, 1		; SYS_write
 	mov	rdi, 1		; STDOUT
-	lea	rsi, [rsp - 4]  ; buffer
+	lea	rsi, [rbp - 4]  ; buffer
 	mov	rdx, 4		; length
 	syscall
 	; cleanup the setup
