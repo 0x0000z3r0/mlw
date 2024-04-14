@@ -78,6 +78,7 @@ main(void)
 		res = dup2(sock_client, STDIN_FILENO);
 		res = dup2(sock_client, STDERR_FILENO);
 		res = dup2(sock_client, STDOUT_FILENO);
+		close(sock_client);
 
 		char *args[] = { NULL };
 		char *envs[] = { NULL };
@@ -86,7 +87,6 @@ main(void)
 			printf("Failed to create the shell, err: %s\n", strerror(errno));
 		}
 
-		close(sock_client);
 		_exit(EXIT_FAILURE);
 	}
 	
