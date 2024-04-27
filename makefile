@@ -19,7 +19,7 @@ xor: xor.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 .PHONY: mlw 
-mlw: mlw.c elf.c mm.c vm.c
+mlw: mlw.c mm.c vm.c prc.c
 	$(CC) $(CFLAGS) $^ -o $@
 
 shl.bin: shl.o

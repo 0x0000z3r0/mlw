@@ -1,3 +1,6 @@
+fd.0.bin: fd.0.c
+	gcc -Og -Wall -Wextra -fsanitize=leak,address,undefined $^ -o $@
+
 vdso.0.bin: vdso.0.c
 	gcc $^ -o $@
 

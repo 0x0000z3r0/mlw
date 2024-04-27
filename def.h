@@ -60,64 +60,68 @@ mm_list_get(struct mm_list*, pid_t);
 void
 mm_list_del(struct mm_list*);
 
+// ============= PRC =============
+
+enum {
+	PRC_LOCK_ATTACH	= -3,
+	PRC_LOCK_WAIT	= -2,
+	PRC_LOCK_SIG	= -1,
+	PRC_LOCK_OK	= 0,
+};
+
+int
+prc_lock(pid_t);
+
+enum {
+	PRC_CONT_ERR	= -3,
+	PRC_CONT_WAIT	= -2,
+	PRC_CONT_SIG	= -1,
+	PRC_CONT_OK	= 0,
+};
+
+int
+prc_cont(pid_t);
+
+enum {
+	PRC_UNLOCK_DETACH	= -1,
+	PRC_UNLOCK_OK	= 0,
+};
+
+int
+prc_unlock(pid_t);
+
 // ============= VM =============
 
 enum {
-	VM_READ_ERR	= -4,
-	VM_READ_ATTACH	= -3,
-	VM_READ_WAIT	= -2,
-	VM_READ_DETACH	= -1,
+	VM_READ_PEEK	= -1,
 	VM_READ_OK	= 0,
-	VM_READ_PTRACE
 };
 
 int
-vm_read(pid_t, size_t, void*, const void*, char);
+vm_read(pid_t, size_t, void*, const void*);
 
 enum {
-	VM_WRITE_ERR	= -5,
-	VM_WRITE_ATTACH	= -4,
-	VM_WRITE_WAIT	= -3,
-	VM_WRITE_POKE	= -2,
-	VM_WRITE_DETACH	= -1,
+	VM_WRITE_POKE	= -1,
 	VM_WRITE_OK	= 0,
-	VM_WRITE_PTRACE
 };
 
 int
-vm_write(pid_t, size_t, const void*, const void*, char);
+vm_write(pid_t, size_t, const void*, const void*);
 
 enum {
-	VM_REGS_GET_ATTACH	= -4,
-	VM_REGS_GET_WAIT	= -3,
-	VM_REGS_GET_REGS	= -2,
-	VM_REGS_GET_DETACH	= -1,
-	VM_REGS_GET_OK		= 0,
+	VM_REGS_GET_REG	= -1,
+	VM_REGS_GET_OK	= 0,
 };
 
 int
 vm_regs_get(pid_t, struct user_regs_struct*);
 
 enum {
-	VM_REGS_SET_ATTACH	= -4,
-	VM_REGS_SET_WAIT	= -3,
-	VM_REGS_SET_REGS	= -2,
-	VM_REGS_SET_DETACH	= -1,
-	VM_REGS_SET_OK		= 0,
+	VM_REGS_SET_REG	= -1,
+	VM_REGS_SET_OK	= 0,
 };
 
 int
 vm_regs_set(pid_t, struct user_regs_struct*);
-
-// ============= ELF =============
-
-enum {
-	ELF_VALID_MEM	= -1,
-	ELF_VALID_OK	= 0,
-	ELF_VALID_NO
-};
-
-int
-elf_valid(size_t, void*);
 
 #endif
